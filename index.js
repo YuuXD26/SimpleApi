@@ -45,7 +45,7 @@ app.get('/simi', async (req, res) => {
     }
     simi.simtalk(text, 'id').then((response) => {
         console.log(response);
-        return res.status(200).json({ status: 200, creator: creator, imageUrl: response.message })
+        return res.status(200).json({ status: 200, creator: creator, message: response.message })
       });
 })
 
