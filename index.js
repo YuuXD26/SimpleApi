@@ -176,7 +176,7 @@ app.get('/leonardo', async (req, res) => {
     }
 })
 
-app.get('/sora', async (req, res) => {
+app.get('/lora', async (req, res) => {
     const { text, apikey } = req.query
     if (!text || !apikey) {
         return res.status(400).json({ error: noapi })
