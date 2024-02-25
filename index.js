@@ -214,18 +214,6 @@ app.get('/dalle', async (req, res) => {
 
 //search
 
-app.get('/nekopoi', async (req, res) => {
-    const { query, apikey } = req.query
-    if (!query || !apikey) {
-        return res.status(400).json({ error: noapi })
-    }
-    if (!validApiKeys[apikey]) {
-        return res.status(401).json({ error: invalidapi })
-    }
-    const animeList = await neko(query);
-    return res.status(200).json({ status: 200, creator: creator, imageUrl: animeList[0] })
-})
-
 app.get('/pinterest', async (req, res) => {
     const { query, apikey } = req.query
     if (!query || !apikey) {
