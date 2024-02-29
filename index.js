@@ -57,9 +57,9 @@ app.get('/free-fire', async (req, res) => {
 })
 
 app.get('/genshin-impact', async (req, res) => {
-    const { id, zone } = req.query;
+    const { id } = req.query;
 
-    var response = await axios.get(`${cekid_url}/genshin-impact?id=${id}&zone=${zone}`)
+    var response = await axios.get(`${cekid_url}/genshin-impact?id=${id}&zone=os_asia`)
 
     var responseData = response.data.data;
 
