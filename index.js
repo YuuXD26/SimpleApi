@@ -25,12 +25,56 @@ const validApiKeys = {
     OnlyTasya: true,
   };
 
+const cekid_url = 'https://api.kitadigital.my.id/api/game'
+
 const noapi = 'Please input a text or apikey!'
 const invalidapi = 'Apikey is invalid!'
 const creator = 'ItsBayy'
 
 app.get('/', (req, res) => {
     res.render('index', { title: 'Homepage' });
+})
+
+//stalker 
+app.get('/mobile-legends', async (req, res) => {
+    const { id, zone } = req.query;
+
+    var response = await axios.get(`${cekid_url}/mobile-legends-dg?id=${id}&zone=${zone}`)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
+})
+
+app.get('/free-fire', async (req, res) => {
+    const { id } = req.query;
+
+    var response = await axios.get(`${cekid_url}/free-fire?id=${id}`)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
+})
+
+app.get('/genshin-impact', async (req, res) => {
+    const { id, zone } = req.query;
+
+    var response = await axios.get(`${cekid_url}/genshin-impact?id=${id}&zone=${zone}`)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
+})
+
+app.get('/star-rail', async (req, res) => {
+    const { id } = req.query;
+
+    var response = await axios.get(`${cekid_url}/honkai-star-rail?id=${id}&zone=prod_official_asia`)
+    console.log(response)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
 })
 
 //ai chat
