@@ -25,12 +25,56 @@ const validApiKeys = {
     OnlyTasya: true,
   };
 
+const cekid_url = 'https://api.kitadigital.my.id/api/game'
+
 const noapi = 'Please input a text or apikey!'
 const invalidapi = 'Apikey is invalid!'
 const creator = 'ItsBayy'
 
 app.get('/', (req, res) => {
     res.render('index', { title: 'Homepage' });
+})
+
+//stalker 
+app.get('/mobile-legends', async (req, res) => {
+    const { id, zone } = req.query;
+
+    var response = await axios.get(`${cekid_url}/mobile-legends-dg?id=${id}&zone=${zone}`)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
+})
+
+app.get('/free-fire', async (req, res) => {
+    const { id } = req.query;
+
+    var response = await axios.get(`${cekid_url}/free-fire?id=${id}`)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
+})
+
+app.get('/genshin-impact', async (req, res) => {
+    const { id } = req.query;
+
+    var response = await axios.get(`${cekid_url}/genshin-impact?id=${id}&zone=os_asia`)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
+})
+
+app.get('/star-rail', async (req, res) => {
+    const { id } = req.query;
+
+    var response = await axios.get(`${cekid_url}/honkai-star-rail?id=${id}&zone=prod_official_asia`)
+    console.log(response)
+
+    var responseData = response.data.data;
+
+    return res.status(200).json({ status: 200, creator: creator, message: 'Account found successfully!', username: responseData.username });
 })
 
 //ai chat
@@ -45,7 +89,7 @@ app.get('/simi', async (req, res) => {
     }
     simi.simtalk(text, 'id').then((response) => {
         console.log(response);
-        return res.status(200).json({ status: 200, creator: creator, imageUrl: response.message })
+        return res.status(200).json({ status: 200, creator: creator, message: response.message })
       });
 })
 
@@ -176,7 +220,7 @@ app.get('/leonardo', async (req, res) => {
     }
 })
 
-app.get('/sora', async (req, res) => {
+app.get('/lora', async (req, res) => {
     const { text, apikey } = req.query
     if (!text || !apikey) {
         return res.status(400).json({ error: noapi })
@@ -213,18 +257,6 @@ app.get('/dalle', async (req, res) => {
 })
 
 //search
-
-app.get('/nekopoi', async (req, res) => {
-    const { query, apikey } = req.query
-    if (!query || !apikey) {
-        return res.status(400).json({ error: noapi })
-    }
-    if (!validApiKeys[apikey]) {
-        return res.status(401).json({ error: invalidapi })
-    }
-    const animeList = await neko(query);
-    return res.status(200).json({ status: 200, creator: creator, imageUrl: animeList[0] })
-})
 
 app.get('/pinterest', async (req, res) => {
     const { query, apikey } = req.query
