@@ -5,6 +5,9 @@ const hercaiModule = require("./lib/hercai");
 const axios = require('axios')
 const simi = require('simsimi-api')
 const bodyParser = require('body-parser')
+const fs = require('fs')
+const { Aki } = require('aki-api')
+const fg = require('api-dylux')
 const ai = require("./lib/ai")
 const neko = require('./lib/nekopoi')
 const { textToImage } = require('./lib/tti')
@@ -31,9 +34,232 @@ const noapi = 'Please input a text or apikey!'
 const invalidapi = 'Apikey is invalid!'
 const creator = 'ItsBayy'
 
+//penyimpanan sementara
+const readSessionsFromFile = () => {
+    if (fs.existsSync('./src/akinator.json')) {
+      const data = fs.readFileSync('./src/akinator.json', 'utf8');
+      return JSON.parse(data);
+    } else {
+      return {};
+    }
+  };
+  
+  const saveSessionsToFile = (sessions) => {
+    fs.writeFileSync('./src/akinator.json', JSON.stringify(sessions), 'utf8');
+  };
+  
+  let sessions = readSessionsFromFile();
+
 app.get('/', (req, res) => {
     res.render('index', { title: 'Homepage' });
 })
+
+//downloader
+app.get('/ytmp3', async (req, res) => {
+    const { url } = req.query
+    if(!url) return res.json({ status: 500, message: 'Enter the link!' })
+
+    let data = await fg.ytmp3(url)
+
+    return res.json({ status: 200, creator: creator, hasil: data })
+})
+
+app.get('/ytmp4', async (req, res) => {
+    const { url } = req.query
+    if(!url) return res.json({ status: 500, message: 'Enter the link!' })
+
+    let data = await fg.ytmp4(url)
+
+    return res.json({ status: 200, creator: creator, hasil: data })
+})
+
+app.get('/fbdl', async (req, res) => {
+    const { url } = req.query
+    if(!url) return res.json({ status: 500, message: 'Enter the link!' })
+
+    let data = await fg.fbdl(url)
+
+    return res.json({ status: 200, creator: creator, hasil: data })
+})
+
+//games
+app.get('/akinator/start', async (req, res) => {
+    const region = 'id';
+    const childMode = false;
+  const proxy = undefined;
+  const aki = new Aki({ region, childMode, proxy });
+
+  await aki.start();
+
+  const sessionID = Math.random().toString(36).substring(2, 15); 
+  sessions[sessionID] = { aki, lastQuestion: null };
+
+  saveSessionsToFile(sessions);
+
+  res.json({
+    status: 200,
+    message: 'success',
+    result: {
+      session: sessionID,
+      question: aki.question,
+      progression: aki.progress,
+      step: aki.step,
+    },
+  });
+});
+app.get('/akinator/answer', async (req, res) => {
+    const { session, answer } = req.query;
+  
+    if (!sessions[session]) {
+      return res.json({
+        status: 404,
+        message: 'Session not found',
+        result: null,
+      });
+    }
+  
+    const { aki } = sessions[session];
+    
+    // Mengubah jawaban menjadi indeks
+    let answerIndex;
+    switch(answer.toLowerCase()) {
+        case 'ya':
+            answerIndex = 0;
+            break;
+        case 'tidak':
+            answerIndex = 1;
+            break;
+        case 'tidak tahu':
+            answerIndex = 2;
+            break;
+        case 'mungkin':
+            answerIndex = 3;
+            break;
+        case 'mungkin tidak':
+            answerIndex = 4;
+            break;
+        default:
+            return res.status(400).json({
+                status: 400,
+                message: 'Invalid answer\nanswer avaible: ya, tidak, tidak tahu, mungkin, mungkin tidak',
+                result: null,
+            });
+    }
+  
+    try {
+      await aki.step(answerIndex);
+  
+      sessions[session].lastQuestion = aki.question;
+  
+      saveSessionsToFile(sessions);
+  
+      res.json({
+        status: 200,
+        message: 'success',
+        result: {
+          session,
+          question: aki.question,
+          progression: aki.progress,
+          step: aki.currentStep,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        status: 500,
+        message: 'Error answering the question',
+        result: null,
+      });
+    }
+});
+
+  app.get('/akinator/back', async (req, res) => {
+    const { session } = req.query;
+  
+    if (!sessions[session]) {
+      return res.json({
+        status: 404,
+        message: 'Session not found',
+        result: null,
+      });
+    }
+  
+    const { aki } = sessions[session]; // Mengambil objek Akinator dari properti aki
+  
+    try {
+      if (aki.currentStep && aki.currentStep > 0) {
+        aki.back();
+  
+        sessions[session].aki = aki; // Menyimpan kembali objek Akinator ke dalam properti aki
+        
+        res.json({
+          status: 200,
+          message: 'success',
+          result: {
+            session,
+            question: aki.question,
+            progression: aki.progression,
+            step: aki.currentStep,
+          },
+        });
+      } else {
+        res.json({
+          status: 400,
+          message: 'Cannot go back, already at the beginning',
+          result: null,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        status: 500,
+        message: 'Error going back',
+        result: null,
+      });
+    }
+  });
+  app.get('/akinator/end', async (req, res) => {
+    const { session } = req.query;
+  
+    if (!sessions[session]) {
+      return res.json({
+        status: 404,
+        message: 'Session not found',
+        result: null,
+      });
+    }
+  
+    const { aki } = sessions[session]; // Mengambil objek Akinator dari properti aki
+  
+    try {
+      await aki.win();
+  
+      const result = {
+        session,
+        guess: aki.answers[0],
+        guessCount: aki.guessCount,
+      };
+  
+      // Hapus sesi dari sessions setelah permainan selesai
+      delete sessions[session];
+  
+      // Simpan perubahan ke dalam berkas akinator.json
+      saveSessionsToFile(sessions);
+  
+      res.json({
+        status: 200,
+        message: 'success',
+        result,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        status: 500,
+        message: 'Error finishing the game',
+        result: null,
+      });
+    }
+  });
 
 //stalker 
 app.get('/mobile-legends', async (req, res) => {
